@@ -1,0 +1,73 @@
+/* index.css */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background-color: #e9f5f5; /* pale teal */
+  color: #004d4d; /* dark teal */
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #008080; /* teal */
+}
+
+input[type="file"] {
+  display: block;
+  margin: 0 auto 20px;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+  background-color: #f0fafafa;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 0 5px rgba(0, 128, 128, 0.2);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+}
+
+thead th {
+  background-color: #008080; /* teal */
+  color: white;
+  padding: 8px;
+  border: 1px solid #005757;
+  text-align: center;
+  font-weight: 600;
+  user-select: none;
+}
+
+tbody td {
+  border: 1px solid #4ca3a3;
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  color: #004d4d;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #d6f0f0; /* very light teal */
+}
+
+tbody tr:hover {
+  background-color: #a0cccc; /* light teal */
+}
+
+p {
+  text-align: center;
+  font-style: italic;
+  color: #007272; /* medium teal */
+  margin: 15px 0;
+}
