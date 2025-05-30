@@ -260,7 +260,6 @@ export default function App() {
     for (let i = 0; i < colParts.length; i++) {
       const parts = colParts[i]
       const label = parts[level] || ''
-      const nextLabel = colParts[i + 1]?.[level] || ''
       const isLast = i === colParts.length - 1
 
       if (label === prevLabel) {
@@ -319,72 +318,107 @@ export default function App() {
   </tr>
 </thead>
 
-            <tbody>
-              {grouped.rowKeys.map((rowKey) => (
-                <tr key={rowKey}>
-                  {rows.map((r, idx) => (
-                    <td key={r}>{rowKey.split("|")[idx]}</td>
-                  ))}
-                  {grouped.colKeys.map((colKey) =>
-                    measures.map(({ field, agg }) => {
-                      const values = grouped.pivot[rowKey]?.[colKey]?.[field] || []
-                      const val = aggregate(values, agg)
-                      return (
-                        <td key={`${colKey}-${field}`}>
-                          {isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)}
-                        </td>
-                      )
-                    })
-                  )}
-                  <td>
-                    {measures
-                      .map(({ field, agg }) => {
-                        let totalValues: number[] = []
-                        grouped.colKeys.forEach((colKey) => {
-                          const vals = grouped.pivot[rowKey]?.[colKey]?.[field] || []
-                          totalValues = totalValues.concat(vals)
-                        })
-                        const val = aggregate(totalValues, agg)
-                        return isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)
-                      })
-                      .join(", ")}
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td colSpan={rows.length || 1}>Total</td>
-                {grouped.colKeys.map((colKey) =>
-                  measures.map(({ field, agg }) => {
-                    let colValues: number[] = []
-                    grouped.rowKeys.forEach((rowKey) => {
-                      const vals = grouped.pivot[rowKey]?.[colKey]?.[field] || []
-                      colValues = colValues.concat(vals)
-                    })
-                    const val = aggregate(colValues, agg)
-                    return (
-                      <td key={`total-${colKey}-${field}`}>
-                        {isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)}
-                      </td>
-                    )
-                  })
-                )}
-                <td>
-                  {measures
-                    .map(({ field, agg }) => {
-                      let allValues: number[] = []
-                      grouped.rowKeys.forEach((rowKey) => {
-                        grouped.colKeys.forEach((colKey) => {
-                          const vals = grouped.pivot[rowKey]?.[colKey]?.[field] || []
-                          allValues = allValues.concat(vals)
-                        })
-                      })
-                      const val = aggregate(allValues, agg)
-                      return isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)
-                    })
-                    .join(", ")}
-                </td>
-              </tr>
-            </tbody>
+           <tbody>
+  {grouped.rowKeys.map((rowKey, rowIndex) => {
+    const rowParts = rowKey.split("|")
+
+    // Helper to calculate how many rows to span for a level
+    const getRowSpan = (level: number): number => {
+      let span = 1
+      for (let i = rowIndex + 1; i < grouped.rowKeys.length; i++) {
+        const nextParts = grouped.rowKeys[i].split("|")
+        if (nextParts[level] !== rowParts[level]) break
+        span++
+      }
+      return span
+    }
+
+    // Check if this is the first occurrence of the value at this level
+    const isFirstOccurrence = (level: number): boolean => {
+      if (rowIndex === 0) return true
+      const prevParts = grouped.rowKeys[rowIndex - 1].split("|")
+      return rowParts[level] !== prevParts[level]
+    }
+
+    return (
+      <tr key={rowKey}>
+        {rows.map((r, idx) =>
+          isFirstOccurrence(idx) ? (
+            <td key={`${rowKey}-row-${idx}`} rowSpan={getRowSpan(idx)}>
+              {rowParts[idx]}
+            </td>
+          ) : null
+        )}
+
+        {grouped.colKeys.map((colKey) =>
+          measures.map(({ field, agg }) => {
+            const values = grouped.pivot[rowKey]?.[colKey]?.[field] || []
+            const val = aggregate(values, agg)
+            return (
+              <td key={`${rowKey}-${colKey}-${field}`}>
+                {isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)}
+              </td>
+            )
+          })
+        )}
+
+        {/* Row total */}
+        <td>
+          {measures
+            .map(({ field, agg }) => {
+              let totalValues: number[] = []
+              grouped.colKeys.forEach((colKey) => {
+                const vals = grouped.pivot[rowKey]?.[colKey]?.[field] || []
+                totalValues = totalValues.concat(vals)
+              })
+              const val = aggregate(totalValues, agg)
+              return isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)
+            })
+            .join(", ")}
+        </td>
+      </tr>
+    )
+  })}
+
+  {/* Column Total Row */}
+  <tr>
+    <td colSpan={rows.length || 1}>Total</td>
+
+    {grouped.colKeys.map((colKey) =>
+      measures.map(({ field, agg }) => {
+        let colValues: number[] = []
+        grouped.rowKeys.forEach((rowKey) => {
+          const vals = grouped.pivot[rowKey]?.[colKey]?.[field] || []
+          colValues = colValues.concat(vals)
+        })
+        const val = aggregate(colValues, agg)
+        return (
+          <td key={`total-${colKey}-${field}`}>
+            {isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)}
+          </td>
+        )
+      })
+    )}
+
+    {/* Grand Total Cell */}
+    <td>
+      {measures
+        .map(({ field, agg }) => {
+          let allValues: number[] = []
+          grouped.rowKeys.forEach((rowKey) => {
+            grouped.colKeys.forEach((colKey) => {
+              const vals = grouped.pivot[rowKey]?.[colKey]?.[field] || []
+              allValues = allValues.concat(vals)
+            })
+          })
+          const val = aggregate(allValues, agg)
+          return isNaN(val) ? " " : val === 0 ? "" : val.toFixed(2)
+        })
+        .join(", ")}
+    </td>
+  </tr>
+</tbody>
+
           </table>
         )}
       </div>
